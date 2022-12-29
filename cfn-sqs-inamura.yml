@@ -1,0 +1,22 @@
+NotifySQS:
+    Type: AWS::SQS::Queue
+  
+  # SQS policy
+  SQSPolicy: 
+    Type: AWS::SQS::QueuePolicy
+    Properties: 
+      Queues: 
+        - !Ref NotifySQS
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: 
+              - "SQS:*"
+            Effect: "Allow"
+            Resource: 
+              Fn::GetAtt:
+                - "NotifySQS"
+                - "Arn"
+            Principal:  
+              AWS: 
+                - "*"  
