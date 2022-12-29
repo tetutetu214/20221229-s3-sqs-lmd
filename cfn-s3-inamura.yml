@@ -100,7 +100,7 @@ Resources:
             Status: Enabled
             ExpirationInDays: !Ref ExpirationInDays
       NotificationConfiguration:
-        LambdaConfigurations:
+        QueueConfigurations: 
           - Event: "s3:ObjectCreated:*"
             Filter:
               S3Key:
@@ -109,7 +109,7 @@ Resources:
                     Value: !Ref Prefix
                   - Name: suffix
                     Value: !Ref Suffix
-            Function: !ImportValue cfn-lmd-inamura-arn
+            Queue: !ImportValue cfn-sqs-inamura-queuearn
       Tags:
         - Key: "User"
           Value: !Ref TagsName

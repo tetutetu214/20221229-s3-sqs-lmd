@@ -10,14 +10,11 @@ Metadata:
           default: "SQS Configuration"
         Parameters:
         - QueueName
-        # - FifoQueue
         - TagsValue
 
     ParameterLabels:
       QueueName:
         default: "QueueName"
-      # FifoQueue:
-      #   default: "FifoQueue"
       TagsValue:
         default: "TagsValue"
 
@@ -28,10 +25,6 @@ Parameters:
   QueueName:
     Type: String
     Default: "cfn-sqs-inamura"
-  # FifoQueue:
-  #   Type: String
-  #   Default: "true"
-  #   AllowedValues: [ "true", "false" ]
   TagsValue:
     Type: String
     Default: "inamura"
@@ -43,8 +36,7 @@ Resources:
   NotifySQS:
     Type: AWS::SQS::Queue
     Properties: 
-      QueueName: !Sub "${QueueName}.fifo"
-      FifoQueue: true
+      QueueName: !Ref QueueName
       Tags: 
         - Key: "User"
           Value: !Ref TagsValue
