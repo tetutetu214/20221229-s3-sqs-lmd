@@ -1,7 +1,57 @@
-NotifySQS:
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SQS Create
+# ------------------------------------------------------------#
+#  Metadata
+# ------------------------------------------------------------#
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: "SQS Configuration"
+        Parameters:
+        - QueueName
+        # - FifoQueue
+        - TagsValue
+
+    ParameterLabels:
+      QueueName:
+        default: "QueueName"
+      # FifoQueue:
+      #   default: "FifoQueue"
+      TagsValue:
+        default: "TagsValue"
+
+# ------------------------------------------------------------#
+#  InputParameters
+# ------------------------------------------------------------#
+Parameters:
+  QueueName:
+    Type: String
+    Default: "cfn-sqs-inamura"
+  # FifoQueue:
+  #   Type: String
+  #   Default: "true"
+  #   AllowedValues: [ "true", "false" ]
+  TagsValue:
+    Type: String
+    Default: "inamura"
+
+# ------------------------------------------------------------#
+#  SQS
+# ------------------------------------------------------------#
+Resources:
+  NotifySQS:
     Type: AWS::SQS::Queue
-  
-  # SQS policy
+    Properties: 
+      QueueName: !Sub "${QueueName}.fifo"
+      FifoQueue: true
+      Tags: 
+        - Key: "User"
+          Value: !Ref TagsValue
+
+# ------------------------------------------------------------#
+#  SQS QueuePolicy
+# ------------------------------------------------------------#    
   SQSPolicy: 
     Type: AWS::SQS::QueuePolicy
     Properties: 
@@ -13,10 +63,20 @@ NotifySQS:
             Action: 
               - "SQS:*"
             Effect: "Allow"
-            Resource: 
-              Fn::GetAtt:
-                - "NotifySQS"
-                - "Arn"
+            Resource: !GetAtt NotifySQS.Arn
             Principal:  
               AWS: 
                 - "*"  
+
+# ------------------------------------------------------------#
+# Output Parameters
+# ------------------------------------------------------------#                
+Outputs:
+  NotifySQS:
+    Value: !GetAtt NotifySQS.QueueName
+    Export:
+      Name: !Sub "${QueueName}-queuename"
+  QueueArn:
+    Value: !GetAtt NotifySQS.Arn
+    Export:
+      Name: !Sub "${QueueName}-queuearn"
