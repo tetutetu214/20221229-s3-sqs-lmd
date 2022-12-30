@@ -67,6 +67,15 @@ Resources:
 # Output Parameters
 # ------------------------------------------------------------#                
 Outputs:
+  SNSTopic:
+    Value: !GetAtt SNSTopic.Arn
+    Export:
+
+      Name: !Sub "${TopicName}-arn"
+# ------------------------------------------------------------#
+# Output Parameters
+# ------------------------------------------------------------#                
+Outputs:
   SNSArn:
     Value: !Ref SNSTopic
     Export:
