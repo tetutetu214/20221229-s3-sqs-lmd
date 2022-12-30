@@ -59,23 +59,38 @@ Resources:
           import boto3
           import os
           import datetime
+          import urllib.parse
+          import json
 
-          client = boto3.client('sns')
+          print('Loading function')
+
+          sns_client = boto3.client('sns')
           SNS = os.environ['SNS']
           Subject = "【件名】SNS通知 "
           Message = "S3にオブジェクトが作成されました"
 
           def lambda_handler(event, context):
-              date = datetime.datetime.now()
-              d = date.strftime('%Y%m%d %H:%M:%S')
+              for record in event['Records']:
+                  payload = record["body"]
+                  events = json.loads(payload)
 
-              params = {
-              'TopicArn': SNS,
-              'Subject': Subject + str(d),
-              'Message': Message
-              }
+                  bucket = urllib.parse.unquote_plus(events['Records'][0]['s3']['bucket']['name'], encoding='utf-8')
+                  key = urllib.parse.unquote_plus(events['Records'][0]['s3']['object']['key'], encoding='utf-8')
+                  
+                  print("BUCKET NAME:" + str(bucket))
+                  print("OBJECT NAME:" + str(key))
+
+          
+                  date = datetime.datetime.now()
+                  d = date.strftime('%Y%m%d %H:%M:%S')
+
+                  params = {
+                  'TopicArn': SNS,
+                  'Subject': Subject + str(d),
+                  'Message': Message + "\n\n" + "S3バケット名   :" + str(bucket) + "\n" + "オブジェクト名:" + str(key)
+                  }
               
-              client.publish(**params)
+                  sns_client.publish(**params)
 
       Description: !Ref Description
       FunctionName: !Ref FunctionName
