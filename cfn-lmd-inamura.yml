@@ -56,30 +56,26 @@ Resources:
     Properties:
       Code:
         ZipFile: |
-          import json
-          import urllib.parse
           import boto3
+          import os
+          import datetime
 
-          print('Loading function')
-
-          s3 = boto3.client('s3')
-
+          client = boto3.client('sns')
+          SNS = os.environ['SNS']
+          Subject = "【件名】SNS通知 "
+          Message = "S3にオブジェクトが作成されました"
 
           def lambda_handler(event, context):
-              bucket = urllib.parse.unquote_plus(event['Records'][0]['s3']['bucket']['name'], encoding='utf-8')
-              key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
-              print("BUCKET NAME:" + bucket)
-              print("OBJECT NAME:" + key)
+              date = datetime.datetime.now()
+              d = date.strftime('%Y%m%d %H:%M:%S')
 
-              # Get the object from the event and show its content type
-              try:
-                  response = s3.get_object(Bucket=bucket, Key=key)
-                  print("CONTENT TYPE: " + response['ContentType'])
-                  return response['ContentType']
-              except Exception as e:
-                  print(e)
-                  print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
-                  raise e
+              params = {
+              'TopicArn': SNS,
+              'Subject': Subject + str(d),
+              'Message': Message
+              }
+              
+              client.publish(**params)
 
       Description: !Ref Description
       FunctionName: !Ref FunctionName
@@ -88,6 +84,11 @@ Resources:
       Runtime: !Ref Runtime
       Timeout: !Ref Timeout
       Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          SNS: !ImportValue cfn-sns-topic-inamura-arn
+          TZ: "Asia/Tokyo"
+          
       Tags:
         - Key: "User"
           Value: !Ref TagsName
@@ -117,16 +118,24 @@ Resources:
 
               - Effect: "Allow"
                 Action:
-                  - "s3:*" 
-                Resource: !Sub "arn:${AWS::Partition}:s3:::*"
+                  - "sns:Publish" 
+                Resource: "*"
 
-  TriggerLambdaPermission:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      Action: "lambda:InvokeFunction"
+              - Effect: Allow
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource:
+                  - !ImportValue cfn-sqs-inamura-queuearn
+
+  EventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties: 
+      Enabled: true
+      EventSourceArn: !ImportValue cfn-sqs-inamura-queuearn
       FunctionName: !GetAtt Lambda.Arn
-      Principal: "s3.amazonaws.com"
-      SourceArn: !Sub "arn:${AWS::Partition}:s3:::*"
+      BatchSize: 1
 
 # ------------------------------------------------------------#
 # Output Parameters

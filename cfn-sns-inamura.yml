@@ -63,4 +63,15 @@ Resources:
             Action: SNS:Publish
             Resource: !Ref SNSTopic
 
-c
+# ------------------------------------------------------------#
+# Output Parameters
+# ------------------------------------------------------------#                
+Outputs:
+  SNSArn:
+    Value: !Ref SNSTopic
+    Export:
+      Name: !Sub "${TopicName}-arn"
+  SNSTopicName:
+    Value: !Ref TopicName
+    Export:
+      Name: !Ref TopicName
